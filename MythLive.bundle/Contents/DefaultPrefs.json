@@ -1,0 +1,75 @@
+[
+        {
+                "id": "mythtv_enablelivetv",
+                "type": "bool",
+                "label": "Enable LiveTV",
+                "default": "true"
+        },
+        {
+                "id": "mythtv_verbose",
+                "type": "bool",
+                "label": "Enable extra logging for debuging communitaction with MythTV Server? (/var/log/plex-livetv-feeder.log)",
+                "default": "false"
+        },
+        {
+                "id": "mythtv_hostname",
+                "type": "text",
+                "label": "Host or IP Address of the MythTV Server",
+                "default": "localhost"
+        },
+        {
+                "id": "mythtv_category",
+                "type": "text",
+                "label": "What LiveTV categories to display in 'by category' lists?",
+                "default": "Movies,Document,News,Comedy,Sports,Children"
+        },
+        {
+                "id": "programinfocache",
+                "type": "text",
+                "label": "How many minutes to keep program info before allowing Plex to request update",
+                "default": "1"
+        },
+        {
+                "id": "mythtv_video_codec",
+                "type": "text",
+                "label": "Which video codec is used by the MythTV Tuner?. Most frequent values are: 'mpeg2video', 'h264' and 'hevc'. For DVB SD in Europe and US ATSD use 'mpeg2video'. For DVB HD in Europe use 'h264'. For UHD use 'hevc'.",
+                "default": "h264"
+        },
+        {
+                "id": "mythtv_audio_codec",
+                "type": "text",
+                "label": "Which audio codec is used by the MythTV Tuner?. Most frequent values are: 'mp2' and 'ac3'. For DVB with Stereo sound use 'mp2'. For DD5.1 sound use 'ac3'",
+                "default": "mp2"
+        },
+        {
+                "id": "mythtv_audio_channels",
+                "type": "text",
+                "label": "What are the max channels the MythTV Tuner will provide?. Set to 2 for Stereo sound and 6 for DD5.1 sound)",
+                "default": "2"
+        },
+        {
+                "id": "mythtv_container",
+                "type": "text",
+                "label": "Which container is used by the MythTV Tuner?. Most frequent values are: 'mpegts', 'mpegtsraw' and 'mp4'. For DVB tuners best is 'mpegtsraw'.",
+                "default": "mpegtsraw"
+        },
+        {
+                "id": "mythtv_buffersize",
+                "type": "text",
+                "label": "How many bytes will Plex ask for at a time from MythTV Server?",
+                "default": "256000"
+        },
+        {
+                "id": "mythtv_bitrate",
+                "type": "text",
+                "label": "What is average bitrate the MythTV Tuner provide?",
+                "default": "8000"
+        },
+        {
+                "id": "mythtv_contenttype",
+                "type": "text",
+                "label": "What is Content-Type to be delivered from the MythTV Server by plex-livetv-feeder.php helper?",
+                "default": "video/mpeg"
+        }
+
+]
