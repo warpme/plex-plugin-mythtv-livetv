@@ -297,7 +297,7 @@ function get_video_data(){
                 header("Cache-Control:no-cache");
             }
             if (
-            OAconnection_aborted()) {
+            connection_aborted()) {
                 debug("Connection to PLEX aborted...",0);
                 close_data_connection();
                 close_cmd_connection();
