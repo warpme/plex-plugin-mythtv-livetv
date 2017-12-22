@@ -5,9 +5,8 @@ import time
 import json
 import os
 import urllib
-import re
 
-NAME = 'MythTV LiveTV'
+NAME = 'MythTV liveTV'
 PREFIX = '/video/mythlive'
 
 MYTHTV_HOSTNAME = Prefs['mythtv_hostname']
@@ -132,7 +131,7 @@ def DisplayRecordingsSection(title, url):
 
         try:
              MACHINEID = Request.Headers['X-Plex-Client-Identifier'];
-             videourl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&file='+section['FileName']+'&client='+MACHINEID+'&verbose='+str(Prefs['mythtv_verbose'])
+             videourl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&file='+section['FileName']+'&client='+MACHINEID+'&verbose='+str(Prefs['mythtv_verbose'])+'&buffersize='+str(Prefs['mythtv_buffersize'])+'&contenttype='+urllib.pathname2url(Prefs['mythtv_contenttype'])+'&container='+Prefs['mythtv_container']
              thumburl='http://'+MYTHTV_HOSTNAME+':6544'+section['Channel']['IconURL']
              oc.add(CreateVideoClipObject(sectiontitle,videourl,sectiontitle,sourcetitle,sectionsummary,0,thumburl,False))
         except Exception, err:
@@ -148,8 +147,8 @@ def AllChannelsSection(title, url):
     req = HTTP.Request(url).content
     result = JSON.ObjectFromString(req)
 
-    #Log("HTTP Reply: "+req);
-    #Log(json.dumps(result, indent=4, sort_keys=True));
+    Log("HTTP Reply: "+req);
+    Log(json.dumps(result, indent=4, sort_keys=True));
 
     try: list = result['ProgramGuide']['Channels']
     except: list = []
@@ -203,7 +202,7 @@ def AllChannelsSection(title, url):
 
         try:
              MACHINEID = Request.Headers['X-Plex-Client-Identifier'];
-             channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&chanid='+section['ChanNum']+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])
+             channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&chanid='+section['ChanNum']+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])+"&buffersize="+str(Prefs['mythtv_buffersize'])+'&contenttype='+urllib.pathname2url(Prefs['mythtv_contenttype'])+'&container='+Prefs['mythtv_container']
              thumburl='http://'+MYTHTV_HOSTNAME+':6544'+section['IconURL']
              i=i+1
              if title == 'Channels Recently Watched' and 'RecentChannels' in Dict:
@@ -223,7 +222,7 @@ def AllChannelsSection(title, url):
               except:
                    Log("RaList Not Video Object, adding generic channel: "+ralist[i]+" in "+Dict['RecentChannels'])
                    MACHINEID = Request.Headers['X-Plex-Client-Identifier'];
-                   channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&chanid='+str(ralist[i])+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])
+                   channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&chanid='+str(ralist[i])+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])+"&buffersize="+str(Prefs['mythtv_buffersize'])+'&contenttype='+urllib.pathname2url(Prefs['mythtv_contenttype'])+'&container='+Prefs['mythtv_container']
                    oc.add(CreateVideoClipObject(str(ralist[i]),channelurl,str(ralist[i])+" - CURRENT PROGRAM UNKNOWN","","",0,"",False))
               i=i+1
 
@@ -238,60 +237,6 @@ def AllChannelsSection(title, url):
 @route(PREFIX + '/createvideoclipobject', duration=int, include_container=bool)
 def CreateVideoClipObject(channum,smil_url, title, source_title, summary, duration, thumb, include_container=False, **kwargs):
 
-    if Prefs['mythtv_channels_video_codec2']:
-        alt_vcodec_channels = Prefs['mythtv_channels_video_codec2'].split(",");
-    else:
-        alt_vcodec_channels = ['None'];
-
-    Log ("TV channels with alternative video_codec:" + str([alt_vcodec_channels]))
-
-    alt_codec = False;
-    for chan in alt_vcodec_channels:
-        if channum == chan:
-            alt_codec = True;
-
-    if alt_codec:
-        vcodec = Prefs['mythtv_video_codec2']
-        if vcodec == 'auto':
-            vcodec = '';
-    else:
-        vcodec = Prefs['mythtv_video_codec']
-        if vcodec == 'auto':
-            vcodec = '';
-
-
-    if Prefs['mythtv_channels_audio_codec2']:
-        alt_acodec_channels = Prefs['mythtv_channels_audio_codec2'].split(",");
-    else:
-        alt_acodec_channels = ['None'];
-
-    Log ("TV channels with alternative audio_codec:" + str([alt_acodec_channels]))
-
-
-    alt_codec = False;
-    for chan in alt_acodec_channels:
-        if channum == chan:
-            alt_codec = True;
-
-    if alt_codec:
-        acodec = Prefs['mythtv_audio_codec2']
-        if acodec == 'auto':
-            acodec = '';
-    else:
-        acodec = Prefs['mythtv_audio_codec']
-        if acodec == 'auto':
-            acodec = '';
-
-
-    achannels = Prefs['mythtv_audio_channels']
-    if achannels == 'auto':
-        achannels = '';
-
-    Log ("TV channel requested:" + channum)
-    Log ("Will use video codec:'" + vcodec + "'")
-    Log ("Will use audio codec:'" + acodec + "'")
-    Log ("Will use audio channels:'" + achannels + "'")
-
     videoclip_obj = VideoClipObject(
         key = Callback(CreateVideoClipObject, channum=channum,smil_url=smil_url, title=title, source_title=source_title, summary=summary, duration=duration, thumb=thumb, include_container=True),
         rating_key = smil_url,
@@ -301,21 +246,20 @@ def CreateVideoClipObject(channum,smil_url, title, source_title, summary, durati
         source_title = source_title,
         #duration = VIDEO_DURATION,
         thumb = Resource.ContentsOfURLWithFallback(url=thumb),
-
         items = [
             MediaObject(
                 parts = [
                     PartObject(key=Callback(PlayVideo, smil_url=smil_url, resolution=resolution,channum=channum))
                 ],
-                video_codec = vcodec,
-                audio_codec = acodec,
-                audio_channels = achannels,
-                container = 'mp2ts',
+                container = Prefs['mythtv_container'],
+                video_codec = Prefs['mythtv_video_codec'],
+                audio_codec = Prefs['mythtv_audio_codec'],
+                audio_channels = Prefs['mythtv_audio_channels'],
+                video_resolution = resolution,
+                bitrate = Prefs['mythtv_bitrate'],
                 optimized_for_streaming = True
             ) for resolution in [1080]
         ]
-
-
     )
 
     if include_container:

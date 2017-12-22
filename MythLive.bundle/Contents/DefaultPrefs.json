@@ -32,8 +32,20 @@
         {
                 "id": "mythtv_video_codec",
                 "type": "text",
-                "label": "Which video codec is used by the MythTV Tuner?. Most frequent values are: 'mpeg2video', 'h264' and 'hevc'. For DVB SD in Europe and US ATSD use 'mpeg2video'. For DVB HD in Europe use 'h264'. For UHD use 'hevc'.",
+                "label": "Which video codec is used by the MythTV Tuner?. Default is 'auto'. If there is issue with playback, set this appropriatelly to video codec used by TV channel broadcaster. Most frequent values are: 'mpeg2video', 'h264' and 'hevc'. For DVB SD in Europe and US ATSC use 'mpeg2video'. For DVB HD in Europe use 'h264'. For UHD use 'hevc'.",
+                "default": "auto"
+        },
+        {
+                "id": "mythtv_video_codec2",
+                "type": "text",
+                "label": "Video codec used by the MythTV Tuner for TV channels listed as channels with alternative video codec.",
                 "default": "h264"
+        },
+        {
+                "id": "mythtv_channels_video_codec2",
+                "type": "text",
+                "label": "Comma separated list of TV channels where alternative video codec must be used.",
+                "default": ""
         },
         {
                 "id": "mythtv_audio_codec",
@@ -42,34 +54,21 @@
                 "default": "mp2"
         },
         {
+                "id": "mythtv_audio_codec2",
+                "type": "text",
+                "label": "Audio codec used by the MythTV Tuner for TV channels listed as channels with alternative audio codec.",
+                "default": "ac3"
+        },
+        {
+                "id": "mythtv_channels_audio_codec2",
+                "type": "text",
+                "label": "Comma separated list of TV channels where alternative audio codec must be used.",
+                "default": ""
+        },
+        {
                 "id": "mythtv_audio_channels",
                 "type": "text",
-                "label": "What are the max channels the MythTV Tuner will provide?. Set to 2 for Stereo sound and 6 for DD5.1 sound)",
-                "default": "2"
-        },
-        {
-                "id": "mythtv_container",
-                "type": "text",
-                "label": "Which container is used by the MythTV Tuner?. Most frequent values are: 'mpegts', 'mpegtsraw' and 'mp4'. For DVB tuners best is 'mpegtsraw'.",
-                "default": "mpegtsraw"
-        },
-        {
-                "id": "mythtv_buffersize",
-                "type": "text",
-                "label": "How many bytes will Plex ask for at a time from MythTV Server?",
-                "default": "256000"
-        },
-        {
-                "id": "mythtv_bitrate",
-                "type": "text",
-                "label": "What is average bitrate the MythTV Tuner provide?",
-                "default": "8000"
-        },
-        {
-                "id": "mythtv_contenttype",
-                "type": "text",
-                "label": "What is Content-Type to be delivered from the MythTV Server by plex-livetv-feeder.php helper?",
-                "default": "video/mpeg"
+                "label": "What are the max channels the MythTV Tuner will provide?. Default is 'auto'. If there is issue with playback, set this appropriatelly to video codec used by TV channel broadcaster. Usually: set to 2 for Stereo sound and 6 for DD5.1 sound)",
+                "default": "auto"
         }
-
 ]

@@ -17,7 +17,7 @@
 
 
 //(c)unsober, Piotr Oniszczuk(warpme@o2.pl)
-$ver="1.0";
+$ver="1.0.1";
 
 //Default verbosity if 'verbose' in GET isn't provided or different than 'True' or 'Debug'
 //0=minimal; 1=myth PROTO comands; 2=myth PROTO and data
@@ -236,12 +236,12 @@ function init_data_connection(){
 }
 
 function close_cmd_connection(){
-    debug("Closing cmd socket",0);
+    debug("Closing cmd socket",1);
     @socket_close($socket);
 }
 
 function close_data_connection(){
-    debug("Closing data socket",0);
+    debug("Closing data socket",1);
     @socket_close($data);
 }
 
