@@ -14,10 +14,12 @@
 //-fix some bugs with hardcoded hostname
 //-fix and improved logging & debug output
 //
-
+//v1.1
+//-added support for different mythtv input types.
+//Currently supported types are: DVBInput and MPEG2TS
 
 //(c)unsober, Piotr Oniszczuk(warpme@o2.pl)
-$ver="1.0.1";
+$ver="1.1";
 
 //Default verbosity if 'verbose' in GET isn't provided or different than 'True' or 'Debug'
 //0=minimal; 1=myth PROTO comands; 2=myth PROTO and data
@@ -175,7 +177,7 @@ function identify_file_and_storage_group(){
 function identify_free_tuner($input_info){
     //Identifies free INPUT by parsing $input_info
     //Returns first free tuner i.e. '1'
-    $input_info_arr=explode("DVBInput",$input_info);
+    $input_info_arr=preg_split("/DVBInput|MPEG2TS/",$input_info);
     for ($i=1;$i<sizeof($input_info_arr);$i++){
         debug("(identify_free_tuner): parsing line ".$i." ->".$input_info_arr[$i],2);
         $tuner=preg_split('/( |:)/',$input_info_arr[$i])[2];
