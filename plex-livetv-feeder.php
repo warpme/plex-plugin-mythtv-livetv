@@ -17,9 +17,14 @@
 //v1.1
 //-added support for different mythtv input types.
 //Currently supported types are: DVBInput and MPEG2TS
+//
+//v1.1/1
+//-added some _very basic_ handling of BE communication/operation errors
+
+
 
 //(c)unsober, Piotr Oniszczuk(warpme@o2.pl)
-$ver="1.1";
+$ver="1.1.1";
 
 //Default verbosity if 'verbose' in GET isn't provided or different than 'True' or 'Debug'
 //0=minimal; 1=myth PROTO comands; 2=myth PROTO and data
@@ -106,7 +111,9 @@ $input_info=send_cmd_message("GET_FREE_INPUT_INFO 0",1);
 
 $tuner=identify_free_tuner($input_info);
 if (! $tuner) {
-    debug("No free tuner found...Exting",0);
+    debug("\n
+---- Unfortunatelly no free tuner was found at Your request...
+---- Script will now EXIT!\n",0);
     exit;
 }
 
@@ -155,6 +162,14 @@ function get_filetransfer_info(){
     $filetransfer_info_arr=explode("[]:[]",$filetransfer_info);
     $mythtv_socket=$filetransfer_info_arr[1];
     if ($mythtv_socket!=0) debug("Will use MythTV socket ($mythtv_socket)",0);
+    else {
+        debug("\n
+---- Myth returns socket address=0.
+---- This probably means LiveTV channel is not tunable or there was other issue with LiveTV at backend.
+---- For mode details pls examine MythTV backend log.
+---- Script will now EXIT!...\n",0);
+    exit;
+    }
 }
 
 function get_file_info(){
@@ -171,7 +186,15 @@ function identify_file_and_storage_group(){
     $fullfile=$recording_info_arr[12];
     $file=basename($fullfile);
     $storage_group=$recording_info_arr[41];
-    debug("Storage Group ($storage_group) and File ($file) Found",0);
+    if ($file) debug("Storage Group ($storage_group) and File ($file) Found",0);
+    else {
+        debug("\n
+---- Myth returns empty recording filename.
+---- This probably means starting LiveTV failed at backend due unavaliable channel or other issue.
+---- For mode details pls examine MythTV backend log.
+---- Script will now EXIT!...\n",0);
+        exit;
+    }
 }
 
 function identify_free_tuner($input_info){
