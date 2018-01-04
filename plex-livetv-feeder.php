@@ -18,13 +18,20 @@
 //-added support for different mythtv input types.
 //Currently supported types are: DVBInput and MPEG2TS
 //
-//v1.1/1
+//v1.1.1
 //-added some _very basic_ handling of BE communication/operation errors
+//
+//v1.2
+//-added list of SrcID for which associated tuners should be exluded. This is usefull
+// when user wants to avoid to use tuners where some requested channels are not avaliable.
+// Without filtering - if such tuner is free - mythtv will tune to channel avaliable to this tuner
+// instead to requested channel. In result user will see wrong channel!
+
 
 
 
 //(c)unsober, Piotr Oniszczuk(warpme@o2.pl)
-$ver="1.1.1";
+$ver="1.2";
 
 //Default verbosity if 'verbose' in GET isn't provided or different than 'True' or 'Debug'
 //0=minimal; 1=myth PROTO comands; 2=myth PROTO and data
@@ -37,6 +44,8 @@ $logfilename="/var/log/plex-livetv-feeder.log";
 $mythtv_host="localhost";
 $mythtv_port=6543;
 
+//SoureID list to skip (tuners with these SrcID's will be NOT served by script). Separator is "," i.e. "1,5"
+$sourceid_to_skip="9,10";
 
 
 
@@ -78,9 +87,10 @@ if (@$_GET['chanid']!='')       $mythtv_channel=$_GET['chanid'];
 if (@$_GET['client']!='')       $client=$_GET['client'];
 if (@$_GET['verbose']!='' && $_GET['verbose']=='True' ) $verbose=1;
 if (@$_GET['verbose']!='' && $_GET['verbose']=='Debug') $verbose=2;
-if (@$_GET['content_type']!='') $content_type=$_GET['contenttype'];
+if (@$_GET['contenttype']!='')  $content_type=$_GET['contenttype'];
 if (@$_GET['container']!='')    $container=$_GET['container'];
 if (@$_GET['buffersize']!='')   $bufsize_target=$_GET['buffersize'];
+if (@$_GET['srcidskip']!='')    $sourceid_to_skip=$_GET['srcidskip'];
 
 $options = getopt("h::l::c::m::p::t::v::d::");
 parse_args();
@@ -89,9 +99,12 @@ if ($monitor==0 && $verbose>=0) $logfile=fopen($logfilename,"w");
 
 $hostname_string=$hostname."-".$client;
 
+$sourceid_to_skip=preg_replace('/,|;/', '|', $sourceid_to_skip);
+
 debug("MythTV LiveTV feeder v".$ver." (c)unsober, Piotr Oniszczuk",0);
 debug("  -Backend IP    : ".$mythtv_host,0);
 debug("  -Backend port  : ".$mythtv_port,0);
+debug("  -SrcID skiplist: ".$sourceid_to_skip,0);
 debug("  -Reg. channel  : ".$mythtv_channel,0);
 debug("  -Client ID     : ".$client,0);
 debug("  -Content. type : ".$content_type,0);
@@ -107,9 +120,8 @@ send_cmd_message("MYTH_PROTO_VERSION 91 BuzzOff",1);
 send_cmd_message("ANN Playback $hostname_string 0",1);
 
 $input_info=send_cmd_message("GET_FREE_INPUT_INFO 0",1);
-//debug("Returned INPUT Info: ".$input_info,2);
 
-$tuner=identify_free_tuner($input_info);
+$tuner=identify_free_tuner($input_info,$sourceid_to_skip);
 if (! $tuner) {
     debug("\n
 ---- Unfortunatelly no free tuner was found at Your request...
@@ -197,23 +209,37 @@ function identify_file_and_storage_group(){
     }
 }
 
-function identify_free_tuner($input_info){
+function identify_free_tuner($input_info,$sourceid_to_skip){
     //Identifies free INPUT by parsing $input_info
     //Returns first free tuner i.e. '1'
+    $free_tuner=0;
     $input_info_arr=preg_split("/DVBInput|MPEG2TS/",$input_info);
     for ($i=1;$i<sizeof($input_info_arr);$i++){
         debug("(identify_free_tuner): parsing line ".$i." ->".$input_info_arr[$i],2);
+
+        $sourceid=preg_split('/( |:)/',$input_info_arr[$i])[1];
+        $sourceid=preg_replace('/\[|]/', '', $sourceid);
+        debug("(identify_free_tuner): srcid:".$sourceid,2);
+
         $tuner=preg_split('/( |:)/',$input_info_arr[$i])[2];
         $tuner=preg_replace('/\[|]/', '', $tuner);
-        debug("(identify_free_tuner): identified tuner:".$tuner,2);
-        $mplex=preg_split('/( |:)/',$input_info_arr[$i])[10];
-        $mplex=preg_replace('/\[|]/', '', $mplex);
-        debug("(identify_free_tuner): identified mplex:".$mplex,2);
-        if ($mplex) debug("Skipping tuner".$tuner."(multirec with ".$mplex." mplex)",1);
-        else break;
+        debug("(identify_free_tuner): tuner:".$tuner,2);
+
+        $chanid=preg_split('/( |:)/',$input_info_arr[$i])[10];
+        $chanid=preg_replace('/\[|]/', '', $chanid);
+        debug("(identify_free_tuner): chanid:".$chanid,2);
+
+        if ($chanid) debug("Skipping tuner".$tuner."(now multirecords with ".$chanid." chanid)",1);
+        else {
+             if (preg_match("/".$sourceid."/", $sourceid_to_skip)) debug("Skipping tuner ".$tuner." (it'sSrcID=$sourceid is in excluding list)",1);
+             else {
+                 $free_tuner=$tuner;
+                 break;
+             }
+        }
     }
-    if ($tuner) debug("Found free tuner:".$tuner,0);
-    return $tuner;
+    if ($free_tuner) debug("Found free tuner:".$free_tuner,0);
+    return $free_tuner;
 }
 
 function parse_args(){
