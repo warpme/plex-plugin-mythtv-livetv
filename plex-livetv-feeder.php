@@ -26,12 +26,17 @@
 // when user wants to avoid to use tuners where some requested channels are not avaliable.
 // Without filtering - if such tuner is free - mythtv will tune to channel avaliable to this tuner
 // instead to requested channel. In result user will see wrong channel!
-
+//
+//v1.3
+//-added simple error reporting to clients. Currently script returns HTTP 503 status and also
+//sends encoded msg to PLEX for displaying to user. If anybody knows better way to transef meesage
+//to PLEX played - I'll be more that welcome to implement :-)
+//
 
 
 
 //(c)unsober, Piotr Oniszczuk(warpme@o2.pl)
-$ver="1.2";
+$ver="1.3";
 
 //Default verbosity if 'verbose' in GET isn't provided or different than 'True' or 'Debug'
 //0=minimal; 1=myth PROTO comands; 2=myth PROTO and data
@@ -46,6 +51,7 @@ $mythtv_port=6543;
 
 //SoureID list to skip (tuners with these SrcID's will be NOT served by script). Separator is "," i.e. "1,5"
 $sourceid_to_skip="9,10";
+
 
 
 
@@ -81,6 +87,9 @@ $content_type   = "video/mpeg";
 $container      = "mpeg";
 $bufsize        = 512000;
 $bufsize_target = 256000;
+$no_tuners_avaliable_msg = "plex_no_free_tuners_msg";
+$error_livetv_msg        = "plex_error_livetv_msg";
+
 
 if (@$_GET['readdata']!='')     $readdata=@$_GET['readdata'];
 if (@$_GET['chanid']!='')       $mythtv_channel=$_GET['chanid'];
@@ -123,6 +132,7 @@ $input_info=send_cmd_message("GET_FREE_INPUT_INFO 0",1);
 
 $tuner=identify_free_tuner($input_info,$sourceid_to_skip);
 if (! $tuner) {
+    return_no_tuners_error($mythtv_channel);
     debug("\n
 ---- Unfortunatelly no free tuner was found at Your request...
 ---- Script will now EXIT!\n",0);
@@ -155,8 +165,51 @@ while(1){
 close_data_connection();
 close_cmd_connection();
 
+$filename = "whatever.jpg";
 
+function send_file($filename){
 
+    if(file_exists($filename)){
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        header('Content-Type: ' . finfo_file($finfo, $filename));
+        finfo_close($finfo);
+
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+
+        header('Content-Length: ' . filesize($filename));
+
+        ob_clean();
+        flush();
+        readfile($filename);
+    }
+    else echo "No banner file called ".$filename;
+
+}
+
+function return_no_tuners_error($mythtv_channel){
+    global $no_tuners_avaliable_msg;
+    //header('HTTP/1.1 503 Service Temporarily Unavailable');
+    header('Status: 503 No free tuners avalaible');
+    //echo '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"><html>';
+    //echo '<head><title>503 Service Temporarily Unavailable</head></title>';
+    //echo '<body><h1>No Free Tuners Avaliable</h1><p>The requested TV channel='.$mythtv_channel.' can not be streamed due currently lack of free tuners in system.</p></body>';
+    //echo '</html>';
+    send_file($no_tuners_avaliable_msg);
+}
+
+function return_livetv_error($error_code){
+    global $error_code;
+    //header('HTTP/1.1 503 Service Temporarily Unavailable');
+    header('Status: 503 mythtv returns '.$error_code);
+    //echo '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"><html>';
+    //echo '<head><title>503 Service Temporarily Unavailable</head></title>';
+    //echo '<body><h1>Error in LiveTV session</h1><p>MythTV has free tuner to serve LiveTV request, but there was '.$error_code.' error in LiveTV backend session.</p></body>';
+    //echo '</html>';
+    send_file($error_livetv_msg);
+}
 
 function get_data_size(){
     global $qfiletransfer_info,$bufsize,$bufsize_target;
@@ -175,6 +228,7 @@ function get_filetransfer_info(){
     $mythtv_socket=$filetransfer_info_arr[1];
     if ($mythtv_socket!=0) debug("Will use MythTV socket ($mythtv_socket)",0);
     else {
+        return_livetv_error("mythtv_socket=0");
         debug("\n
 ---- Myth returns socket address=0.
 ---- This probably means LiveTV channel is not tunable or there was other issue with LiveTV at backend.
@@ -200,6 +254,7 @@ function identify_file_and_storage_group(){
     $storage_group=$recording_info_arr[41];
     if ($file) debug("Storage Group ($storage_group) and File ($file) Found",0);
     else {
+        return_livetv_error("file_size=0");
         debug("\n
 ---- Myth returns empty recording filename.
 ---- This probably means starting LiveTV failed at backend due unavaliable channel or other issue.
