@@ -32,11 +32,14 @@
 //sends encoded msg to PLEX for displaying to user. If anybody knows better way to transef meesage
 //to PLEX played - I'll be more that welcome to implement :-)
 //
+//v1.3.1
+//-added to error reporting implemented in v1.3 support for errors on TV channels with different audio types.
+//Currently supported audio types are: mp2 and ac3
 
 
 
 //(c)unsober, Piotr Oniszczuk(warpme@o2.pl)
-$ver="1.3";
+$ver="1.3.1";
 
 //Default verbosity if 'verbose' in GET isn't provided or different than 'True' or 'Debug'
 //0=minimal; 1=myth PROTO comands; 2=myth PROTO and data
@@ -87,8 +90,8 @@ $content_type   = "video/mpeg";
 $container      = "mpeg";
 $bufsize        = 512000;
 $bufsize_target = 256000;
-$no_tuners_avaliable_msg = "plex-livetv-feeder.msg/plex_no_free_tuners_msg";
-$error_livetv_msg        = "plex-livetv-feeder.msg/plex_error_livetv_msg";
+$vcodec         = "auto";
+$acodec         = "mp2";
 
 
 if (@$_GET['readdata']!='')     $readdata=@$_GET['readdata'];
@@ -100,6 +103,8 @@ if (@$_GET['contenttype']!='')  $content_type=$_GET['contenttype'];
 if (@$_GET['container']!='')    $container=$_GET['container'];
 if (@$_GET['buffersize']!='')   $bufsize_target=$_GET['buffersize'];
 if (@$_GET['srcidskip']!='')    $sourceid_to_skip=$_GET['srcidskip'];
+if (@$_GET['vcodec']!='')       $vcodec=$_GET['vcodec'];
+if (@$_GET['acodec']!='')       $acodec=$_GET['acodec'];
 
 if ($monitor==0 && $verbose>=0) $logfile=fopen($logfilename,"w");
 
@@ -108,11 +113,14 @@ $hostname_string=$hostname."-".$client;
 $sourceid_to_skip=preg_replace('/,|;/', '|', $sourceid_to_skip);
 
 debug("MythTV LiveTV feeder v".$ver." (c)unsober, Piotr Oniszczuk",0);
+debug("  -URI from PLEX : ".$_SERVER["REQUEST_URI"],0);
 debug("  -Backend IP    : ".$mythtv_host,0);
 debug("  -Backend port  : ".$mythtv_port,0);
 debug("  -SrcID skiplist: ".$sourceid_to_skip,0);
 debug("  -Reg. channel  : ".$mythtv_channel,0);
 debug("  -Client ID     : ".$client,0);
+debug("  -PLEX v.codec  : ".$vcodec,0);
+debug("  -PLEX a.codec  : ".$acodec,0);
 debug("  -Content. type : ".$content_type,0);
 debug("  -Container type: ".$container,0);
 debug("  -Data chunks   : ".$bufsize_target,0);
@@ -188,17 +196,19 @@ function send_file($filename){
 }
 
 function return_no_tuners_error($mythtv_channel){
-    global $no_tuners_avaliable_msg;
+    global $no_tuners_avaliable_msg,$acodec,$vcodec;
     //header('HTTP/1.1 503 Service Temporarily Unavailable'); PLEX not interpreting 503 in helpful way...
     header('Status: 503 No free tuners avalaible');
-    send_file($no_tuners_avaliable_msg);
+    if ($acodec=="mp2") send_file("plex-livetv-feeder.msg/plex_no_free_tuners_msg_1");
+    if ($acodec=="ac3") send_file("plex-livetv-feeder.msg/plex_no_free_tuners_msg_2");
 }
 
 function return_livetv_error($error_code){
-    global $error_code;
+    global $error_code,$acodec,$vcodec;
     //header('HTTP/1.1 503 Service Temporarily Unavailable'); PLEX not interpreting 503 in helpful way...
     header('Status: 503 mythtv returns '.$error_code);
-    send_file($error_livetv_msg);
+    if ($acodec=="mp2") send_file("plex-livetv-feeder.msg/plex_error_livetv_msg_1");
+    if ($acodec=="ac3") send_file("plex-livetv-feeder.msg/plex_error_livetv_msg_2");
 }
 
 function get_data_size(){

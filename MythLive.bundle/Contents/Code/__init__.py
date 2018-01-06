@@ -132,7 +132,7 @@ def DisplayRecordingsSection(title, url):
 
         try:
              MACHINEID = Request.Headers['X-Plex-Client-Identifier'];
-             videourl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&file='+section['FileName']+'&client='+MACHINEID+'&verbose='+str(Prefs['mythtv_verbose'])+'&srcidskip='+str(Prefs['mythtv_srcid_skiplist'])
+             videourl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?file='+section['FileName']+'&client='+MACHINEID+'&verbose='+str(Prefs['mythtv_verbose'])+'&srcidskip='+str(Prefs['mythtv_srcid_skiplist'])
              thumburl='http://'+MYTHTV_HOSTNAME+':6544'+section['Channel']['IconURL']
              oc.add(CreateVideoClipObject(sectiontitle,videourl,sectiontitle,sourcetitle,sectionsummary,0,thumburl,False))
         except Exception, err:
@@ -203,7 +203,7 @@ def AllChannelsSection(title, url):
 
         try:
              MACHINEID = Request.Headers['X-Plex-Client-Identifier'];
-             channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&chanid='+section['ChanNum']+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])+'&srcidskip='+str(Prefs['mythtv_srcid_skiplist'])
+             channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?chanid='+section['ChanNum']+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])+'&srcidskip='+str(Prefs['mythtv_srcid_skiplist'])
              thumburl='http://'+MYTHTV_HOSTNAME+':6544'+section['IconURL']
              i=i+1
              if title == 'Channels Recently Watched' and 'RecentChannels' in Dict:
@@ -223,7 +223,7 @@ def AllChannelsSection(title, url):
               except:
                    Log("RaList Not Video Object, adding generic channel: "+ralist[i]+" in "+Dict['RecentChannels'])
                    MACHINEID = Request.Headers['X-Plex-Client-Identifier'];
-                   channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&chanid='+str(ralist[i])+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])+'&srcidskip='+str(Prefs['mythtv_srcid_skiplist'])
+                   channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?chanid='+str(ralist[i])+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])+'&srcidskip='+str(Prefs['mythtv_srcid_skiplist'])
                    oc.add(CreateVideoClipObject(str(ralist[i]),channelurl,str(ralist[i])+" - CURRENT PROGRAM UNKNOWN","","",0,"",False))
               i=i+1
 
@@ -299,13 +299,13 @@ def CreateVideoClipObject(channum,smil_url, title, source_title, summary, durati
         summary = summary,
         tagline = source_title,
         source_title = source_title,
-        #duration = VIDEO_DURATION,
+        duration = VIDEO_DURATION,
         thumb = Resource.ContentsOfURLWithFallback(url=thumb),
 
         items = [
             MediaObject(
                 parts = [
-                    PartObject(key=Callback(PlayVideo, smil_url=smil_url, resolution=resolution,channum=channum))
+                    PartObject(key=Callback(PlayVideo, smil_url=smil_url + "&vcodec=" + vcodec + "&acodec=" + acodec, resolution=resolution,channum=channum))
                 ],
                 video_codec = vcodec,
                 audio_codec = acodec,
@@ -314,7 +314,6 @@ def CreateVideoClipObject(channum,smil_url, title, source_title, summary, durati
                 optimized_for_streaming = True
             ) for resolution in [1080]
         ]
-
 
     )
 
