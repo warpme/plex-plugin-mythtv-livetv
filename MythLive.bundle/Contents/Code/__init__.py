@@ -132,7 +132,7 @@ def DisplayRecordingsSection(title, url):
 
         try:
              MACHINEID = Request.Headers['X-Plex-Client-Identifier'];
-             videourl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&file='+section['FileName']+'&client='+MACHINEID+'&verbose='+str(Prefs['mythtv_verbose'])
+             videourl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&file='+section['FileName']+'&client='+MACHINEID+'&verbose='+str(Prefs['mythtv_verbose'])+'&srcidskip='+str(Prefs['mythtv_srcid_skiplist'])
              thumburl='http://'+MYTHTV_HOSTNAME+':6544'+section['Channel']['IconURL']
              oc.add(CreateVideoClipObject(sectiontitle,videourl,sectiontitle,sourcetitle,sectionsummary,0,thumburl,False))
         except Exception, err:
@@ -203,7 +203,7 @@ def AllChannelsSection(title, url):
 
         try:
              MACHINEID = Request.Headers['X-Plex-Client-Identifier'];
-             channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&chanid='+section['ChanNum']+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])
+             channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&chanid='+section['ChanNum']+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])+'&srcidskip='+str(Prefs['mythtv_srcid_skiplist'])
              thumburl='http://'+MYTHTV_HOSTNAME+':6544'+section['IconURL']
              i=i+1
              if title == 'Channels Recently Watched' and 'RecentChannels' in Dict:
@@ -223,7 +223,7 @@ def AllChannelsSection(title, url):
               except:
                    Log("RaList Not Video Object, adding generic channel: "+ralist[i]+" in "+Dict['RecentChannels'])
                    MACHINEID = Request.Headers['X-Plex-Client-Identifier'];
-                   channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&chanid='+str(ralist[i])+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])
+                   channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-feeder.php?readdata=true&chanid='+str(ralist[i])+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])+'&srcidskip='+str(Prefs['mythtv_srcid_skiplist'])
                    oc.add(CreateVideoClipObject(str(ralist[i]),channelurl,str(ralist[i])+" - CURRENT PROGRAM UNKNOWN","","",0,"",False))
               i=i+1
 
