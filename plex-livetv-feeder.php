@@ -50,7 +50,7 @@ $mythtv_host="localhost";
 $mythtv_port=6543;
 
 //SoureID list to skip (tuners with these SrcID's will be NOT served by script). Separator is "," i.e. "1,5"
-$sourceid_to_skip="9,10";
+$sourceid_to_skip="";
 
 
 
@@ -87,8 +87,8 @@ $content_type   = "video/mpeg";
 $container      = "mpeg";
 $bufsize        = 512000;
 $bufsize_target = 256000;
-$no_tuners_avaliable_msg = "plex_no_free_tuners_msg";
-$error_livetv_msg        = "plex_error_livetv_msg";
+$no_tuners_avaliable_msg = "plex-livetv-feeder.msg/plex_no_free_tuners_msg";
+$error_livetv_msg        = "plex-livetv-feeder.msg/plex_error_livetv_msg";
 
 
 if (@$_GET['readdata']!='')     $readdata=@$_GET['readdata'];
@@ -100,9 +100,6 @@ if (@$_GET['contenttype']!='')  $content_type=$_GET['contenttype'];
 if (@$_GET['container']!='')    $container=$_GET['container'];
 if (@$_GET['buffersize']!='')   $bufsize_target=$_GET['buffersize'];
 if (@$_GET['srcidskip']!='')    $sourceid_to_skip=$_GET['srcidskip'];
-
-$options = getopt("h::l::c::m::p::t::v::d::");
-parse_args();
 
 if ($monitor==0 && $verbose>=0) $logfile=fopen($logfilename,"w");
 
@@ -165,7 +162,8 @@ while(1){
 close_data_connection();
 close_cmd_connection();
 
-$filename = "whatever.jpg";
+
+
 
 function send_file($filename){
 
@@ -185,29 +183,21 @@ function send_file($filename){
         flush();
         readfile($filename);
     }
-    else echo "No banner file called ".$filename;
+    else debug("Can not find msg file called ".$filename, 0);
 
 }
 
 function return_no_tuners_error($mythtv_channel){
     global $no_tuners_avaliable_msg;
-    //header('HTTP/1.1 503 Service Temporarily Unavailable');
+    //header('HTTP/1.1 503 Service Temporarily Unavailable'); PLEX not interpreting 503 in helpful way...
     header('Status: 503 No free tuners avalaible');
-    //echo '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"><html>';
-    //echo '<head><title>503 Service Temporarily Unavailable</head></title>';
-    //echo '<body><h1>No Free Tuners Avaliable</h1><p>The requested TV channel='.$mythtv_channel.' can not be streamed due currently lack of free tuners in system.</p></body>';
-    //echo '</html>';
     send_file($no_tuners_avaliable_msg);
 }
 
 function return_livetv_error($error_code){
     global $error_code;
-    //header('HTTP/1.1 503 Service Temporarily Unavailable');
+    //header('HTTP/1.1 503 Service Temporarily Unavailable'); PLEX not interpreting 503 in helpful way...
     header('Status: 503 mythtv returns '.$error_code);
-    //echo '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"><html>';
-    //echo '<head><title>503 Service Temporarily Unavailable</head></title>';
-    //echo '<body><h1>Error in LiveTV session</h1><p>MythTV has free tuner to serve LiveTV request, but there was '.$error_code.' error in LiveTV backend session.</p></body>';
-    //echo '</html>';
     send_file($error_livetv_msg);
 }
 
@@ -295,17 +285,6 @@ function identify_free_tuner($input_info,$sourceid_to_skip){
     }
     if ($free_tuner) debug("Found free tuner:".$free_tuner,0);
     return $free_tuner;
-}
-
-function parse_args(){
-    global $options,$h,$m,$p,$t,$c,$v,$m,$hostname,$mythtv_host,$mythtv_port,$mythtv_channel,$timeout_length,$verbose,$monitor;
-    if (@$options["h"]!="") $hostname=$options["h"];
-    if (@$options["m"]!="") $mythtv_host=$options["m"];
-    if (@$options["p"]!="") $mythtv_port=$options["p"];
-    if (@$options["t"]!="") $timeout_length=$options["t"];
-    if (@$options["c"]!="") $mythtv_channel=$options["c"];
-    if (@$options["v"]!="") $verbose=$options["v"];
-    if (@$options["d"]!="") $monitor=$options["d"];
 }
 
 function init_cmd_connection(){
@@ -410,7 +389,7 @@ function get_video_data(){
                 exit;
             }
             else {
-                debug("Sending data PLEX",1);
+                debug("Sending data PLEX...",1);
                 echo $buf;
             }
         }
