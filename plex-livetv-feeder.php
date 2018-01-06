@@ -284,9 +284,9 @@ function identify_free_tuner($input_info,$sourceid_to_skip){
         $chanid=preg_replace('/\[|]/', '', $chanid);
         debug("(identify_free_tuner): chanid:".$chanid,2);
 
-        if ($chanid) debug("Skipping tuner".$tuner."(now multirecords with ".$chanid." chanid)",1);
+        if ($chanid) debug("Skipping tuner:".$tuner." (multirecords on ".$chanid.")",0);
         else {
-             if (preg_match("/".$sourceid."/", $sourceid_to_skip)) debug("Skipping tuner ".$tuner." (it'sSrcID=$sourceid is in excluding list)",1);
+             if (preg_match("/".$sourceid."/", $sourceid_to_skip)) debug("Skipping tuner:".$tuner." (srcID=$sourceid is excluded)",0);
              else {
                  $free_tuner=$tuner;
                  break;
