@@ -1,8 +1,8 @@
 <?php
 
-//Script supporting PLEX LiveTV plugin.
+//Script providing communication proxy between PLEX LiveTV plugin and MythTV.
 //Script should be placed in RootDoc directory of HTTP server.
-//If Your MythTV backend is ob different host than http server - You need also adjust $mythtv_host variable.
+//If Your MythTV backend is on different host than http server - You need also adjust $mythtv_host variable.
 
 //Changelog:
 //v1.0:
@@ -35,10 +35,11 @@
 //v1.3.1
 //-added to error reporting implemented in v1.3 support for errors on TV channels with different audio types.
 //Currently supported audio types are: mp2 and ac3
+//-rename php supporting script from plex-livetv-feeder.php to plex-livetv-proxy.php.
 
 
 
-//(c)unsober, Piotr Oniszczuk(warpme@o2.pl)
+//(c) unsober, Piotr Oniszczuk(warpme@o2.pl)
 $ver="1.3.1";
 
 //Default verbosity if 'verbose' in GET isn't provided or different than 'True' or 'Debug'
@@ -46,14 +47,14 @@ $ver="1.3.1";
 $verbose=0;
 
 //Location where script will be logging.
-$logfilename="/var/log/plex-livetv-feeder.log";
+$logfilename="/var/log/plex-livetv-proxy.log";
 
 //MythTV backend IP and port
 $mythtv_host="localhost";
 $mythtv_port=6543;
 
 //SoureID list to skip (tuners with these SrcID's will be NOT served by script). Separator is "," i.e. "1,5"
-$sourceid_to_skip="";
+$sourceid_to_skip="9,10";
 
 
 
@@ -112,7 +113,7 @@ $hostname_string=$hostname."-".$client;
 
 $sourceid_to_skip=preg_replace('/,|;/', '|', $sourceid_to_skip);
 
-debug("MythTV LiveTV feeder v".$ver." (c)unsober, Piotr Oniszczuk",0);
+debug("MythTV LiveTV proxy for PLEX v".$ver." by: unsober, Piotr Oniszczuk (c)",0);
 debug("  -URI from PLEX : ".$_SERVER["REQUEST_URI"],0);
 debug("  -Backend IP    : ".$mythtv_host,0);
 debug("  -Backend port  : ".$mythtv_port,0);
@@ -199,16 +200,16 @@ function return_no_tuners_error($mythtv_channel){
     global $no_tuners_avaliable_msg,$acodec,$vcodec;
     //header('HTTP/1.1 503 Service Temporarily Unavailable'); PLEX not interpreting 503 in helpful way...
     header('Status: 503 No free tuners avalaible');
-    if ($acodec=="mp2") send_file("plex-livetv-feeder.msg/plex_no_free_tuners_msg_1");
-    if ($acodec=="ac3") send_file("plex-livetv-feeder.msg/plex_no_free_tuners_msg_2");
+    if ($acodec=="mp2") send_file("plex-livetv-proxy.msg/plex_no_free_tuners_msg_1");
+    if ($acodec=="ac3") send_file("plex-livetv-proxy.msg/plex_no_free_tuners_msg_2");
 }
 
 function return_livetv_error($error_code){
     global $error_code,$acodec,$vcodec;
     //header('HTTP/1.1 503 Service Temporarily Unavailable'); PLEX not interpreting 503 in helpful way...
     header('Status: 503 mythtv returns '.$error_code);
-    if ($acodec=="mp2") send_file("plex-livetv-feeder.msg/plex_error_livetv_msg_1");
-    if ($acodec=="ac3") send_file("plex-livetv-feeder.msg/plex_error_livetv_msg_2");
+    if ($acodec=="mp2") send_file("plex-livetv-proxy.msg/plex_error_livetv_msg_1");
+    if ($acodec=="ac3") send_file("plex-livetv-proxy.msg/plex_error_livetv_msg_2");
 }
 
 function get_data_size(){
