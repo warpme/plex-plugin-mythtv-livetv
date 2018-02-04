@@ -54,7 +54,7 @@ $mythtv_host="localhost";
 $mythtv_port=6543;
 
 //SoureID list to skip (tuners with these SrcID's will be NOT served by script). Separator is "," i.e. "1,5"
-$sourceid_to_skip="9,10";
+$sourceid_to_skip="";
 
 
 
