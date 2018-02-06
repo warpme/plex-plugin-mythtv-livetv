@@ -16,6 +16,7 @@ utc_datetime_cache = utc_datetime
 ALL_CHANNELS = 'http://'+MYTHTV_HOSTNAME+':6544/Guide/GetProgramGuide?StartTime='+utc_datetime.strftime("%Y-%m-%dT%H:%M:%S")+'&EndTime='+(utc_datetime+datetime.timedelta(seconds=60)).strftime("%Y-%m-%dT%H:%M:%S")+"&Details=true"
 ALL_RECORDINGS = 'http://'+MYTHTV_HOSTNAME+':6544/Dvr/GetRecordedList?StartIndex=1&Descending=true'
 RECENT_RECORDINGS = 'http://'+MYTHTV_HOSTNAME+':6544/Dvr/GetRecordedList?StartIndex=1&Count=20&Descending=true'
+CHANNELS_GROUPS = 'http://'+MYTHTV_HOSTNAME+':6544/Guide/GetChannelGroupList?IncludeEmpty=true'
 VIDEO_DURATION = 14400000   # Duration for Transcoder (ms); Default = 14400000 (4 hours)
 
 
@@ -80,9 +81,17 @@ def LiveTVMenu(title):
     else:
          Log("No Recent Channels")
 
-    category_string="All Channels,Channels Recently Watched,"+Prefs["mythtv_category"]
+    if Prefs['mythtv_channel_groups']:
+        chann_groups = Prefs['mythtv_channel_groups'].split(",")
+        Log ("Will show following Channel Groups:" + str([chann_groups]))
+        channel_group_string = ""
+        for group in chann_groups:
+            channel_group_string = channel_group_string + ",Channel Group " + group
+    else:
+        channel_group_string = ""
+
+    category_string="All Channels,Channels Recently Watched,"+Prefs["mythtv_category"]+channel_group_string
     category = category_string.split(',')
-    #category = ["All Channels","Action","Adventure","Children","Comedy","Community","Crime","Documentary","Drama","Game show","Historical Drama","Horror","Music","Nature","News","Politics","Science","Sitcom","Sports event","Talk","Travel","Weather","Western"]
 
     for section in category:
          oc.add(DirectoryObject(key = Callback(AllChannelsSection, title = section, url=ALL_CHANNELS), title = section))
@@ -162,12 +171,23 @@ def AllChannelsSection(title, url):
 
     i=0
     for section in list:
-        Log("Processing... "+section['ChanNum'])
+        Log("Processing channel:"+section['ChanNum']+"; is in ChannelGroups:"+section['ChannelGroups'])
         sectiontitle=""
         if len(section['Programs']) > 0:
              sectionstarttime=datetime.datetime.strptime(section['Programs'][0]['StartTime'],'%Y-%m-%dT%H:%M:%SZ')
              sectionendtime=datetime.datetime.strptime(section['Programs'][0]['EndTime'],'%Y-%m-%dT%H:%M:%SZ')
-             if title=='All Channels' or title.lower() in section['Programs'][0]['Category'].lower() or title.lower() in section['Programs'][0]['CatType'].lower():
+             if title == 'All Channels' or title.lower() in section['Programs'][0]['Category'].lower() or title.lower() in section['Programs'][0]['CatType'].lower():
+                  sectiontitle=section['ChanNum']+" "+section['ChannelName']+" - "+section['Programs'][0]['Title']
+                  sectionsummary=section['Programs'][0]['SubTitle']
+                  if sectionsummary != "" and section['Programs'][0]['Description'] != "": 
+                       sectionsummary=sectionsummary+" - \n"
+                  sectionsummary=sectionsummary+section['Programs'][0]['Description']
+                  sourcetitle=section['Programs'][0]['CatType']
+                  if sourcetitle != "" and section['Programs'][0]['Category'] != "":
+                       sourcetitle=sourcetitle+" / "
+                  sourcetitle=sourcetitle+section['Programs'][0]['Category']
+                  sourcetitle=sourcetitle+' ('+datetime_from_utc_to_local(sectionstarttime).strftime('%I:%M%p')+' - '+datetime_from_utc_to_local(sectionendtime).strftime('%I:%M%p')+')'
+             elif "Channel Group" in title and re.sub('Channel Group ', '', title) in section['ChannelGroups']:
                   sectiontitle=section['ChanNum']+" "+section['ChannelName']+" - "+section['Programs'][0]['Title']
                   sectionsummary=section['Programs'][0]['SubTitle']
                   if sectionsummary != "" and section['Programs'][0]['Description'] != "": 
@@ -179,7 +199,6 @@ def AllChannelsSection(title, url):
                   sourcetitle=sourcetitle+section['Programs'][0]['Category']
                   sourcetitle=sourcetitle+' ('+datetime_from_utc_to_local(sectionstarttime).strftime('%I:%M%p')+' - '+datetime_from_utc_to_local(sectionendtime).strftime('%I:%M%p')+')'
              elif title == 'Channels Recently Watched' and 'RecentChannels' in Dict and section['ChanNum'] in Dict['RecentChannels'].split(","):
-
                   sectiontitle=section['ChanNum']+" "+section['ChannelName']+" - "+section['Programs'][0]['Title']
                   sectionsummary=section['Programs'][0]['SubTitle']
                   if sectionsummary != "" and section['Programs'][0]['Description'] != "":

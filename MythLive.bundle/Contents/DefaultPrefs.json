@@ -24,6 +24,12 @@
                 "default": "Movies,Document,News,Comedy,Sports,Children"
         },
         {
+                "id": "mythtv_channel_groups",
+                "type": "text",
+                "label": "List of MythTV TV Channel Groups to additionally list. Field requires numeric Channel Group ID (like i.e. 1,3). Multiple groups must be comma separated",
+                "default": ""
+        },
+        {
                 "id": "programinfocache",
                 "type": "text",
                 "label": "How many minutes to keep program info before allowing Plex to request update",
