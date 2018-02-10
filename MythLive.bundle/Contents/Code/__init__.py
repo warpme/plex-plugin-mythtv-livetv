@@ -105,15 +105,15 @@ def LiveTVMenu(title):
         channel_group_string = ""
         for group in chann_groups:
             try:
-                Log("channel group validation:\'" + group + "\' (id=" + channel_group_id[group] + ") is valid")
-                channel_group_string = channel_group_string + ",Channel Group " + group
+                Log("channels group validation:\'" + group + "\' (id=" + channel_group_id[group] + ") is valid")
+                channel_group_string = channel_group_string + "Channels Group " + group + ","
             except:
-                Log("channel group validation:\'"+ group + "\' is not valid! skipping...")
+                Log("channels group validation:\'"+ group + "\' is not valid! skipping...")
 
     else:
         channel_group_string = ""
 
-    category_string="All Channels,Channels Recently Watched,"+Prefs["mythtv_category"]+channel_group_string
+    category_string="Channels Recently Watched," + channel_group_string + Prefs["mythtv_category"] + ",All Channels"
     category = category_string.split(',')
 
     for section in category:
@@ -210,7 +210,7 @@ def AllChannelsSection(title, url):
                        sourcetitle=sourcetitle+" / "
                   sourcetitle=sourcetitle+section['Programs'][0]['Category']
                   sourcetitle=sourcetitle+' ('+datetime_from_utc_to_local(sectionstarttime).strftime('%I:%M%p')+' - '+datetime_from_utc_to_local(sectionendtime).strftime('%I:%M%p')+')'
-             elif "Channel Group" in title and channel_group_id[re.sub('Channel Group ', '', title)] in section['ChannelGroups']:
+             elif "Channels Group" in title and channel_group_id[re.sub('Channels Group ', '', title)] in section['ChannelGroups']:
                   sectiontitle=section['ChanNum']+" "+section['ChannelName']+" - "+section['Programs'][0]['Title']
                   sectionsummary=section['Programs'][0]['SubTitle']
                   if sectionsummary != "" and section['Programs'][0]['Description'] != "": 
