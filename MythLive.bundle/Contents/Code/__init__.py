@@ -23,6 +23,7 @@ VIDEO_DURATION = 14400000   # Duration for Transcoder (ms); Default = 14400000 (
 ####################################################################################################
 def Start():
 
+    Log("MythTV LiveTV plugin v2.0 by unsober, Piotr Oniszczuk")
     Plugin.AddViewGroup("InfoList", viewMode="MediaPreview", mediaType="items",type='grid',summary=1)
     ObjectContainer.title1 = NAME
     ObjectContainer.view_group='InfoList'
@@ -51,7 +52,7 @@ def MainMenu():
 @route(PREFIX+'/livetv')
 def LiveTVMenu(title):
 
-    global ALL_CHANNELS,utc_datetime_cache
+    global ALL_CHANNELS,CHANNELS_GROUPS,utc_datetime_cache,channel_group_name,channel_group_id
 
     oc = ObjectContainer(no_cache=True,view_group='InfoList')
 
@@ -82,11 +83,33 @@ def LiveTVMenu(title):
          Log("No Recent Channels")
 
     if Prefs['mythtv_channel_groups']:
+        req = HTTP.Request(CHANNELS_GROUPS).content
+        result = JSON.ObjectFromString(req)
+
+        #Log("CHANNELS_GROUPS HTTP Reply: "+req);
+        #Log(json.dumps(result, indent=4, sort_keys=True));
+
+        try: list = result['ChannelGroupList']['ChannelGroups']
+        except: list = []
+
+        channel_group_name = {}
+        channel_group_id = {}
+
+        for section in list:
+            Log("myth provides channel group:\'"+section['Name']+"\', id="+section['GroupId'])
+            channel_group_name[ section['GroupId'] ] = section['Name']
+            channel_group_id[ section['Name'] ] = section['GroupId']
+
         chann_groups = Prefs['mythtv_channel_groups'].split(",")
-        Log ("Will show following Channel Groups:" + str([chann_groups]))
+        Log ("plugin config channel groups:" + str([chann_groups]))
         channel_group_string = ""
         for group in chann_groups:
-            channel_group_string = channel_group_string + ",Channel Group " + group
+            try:
+                Log("channel group validation:\'" + group + "\' (id=" + channel_group_id[group] + ") is valid")
+                channel_group_string = channel_group_string + ",Channel Group " + group
+            except:
+                Log("channel group validation:\'"+ group + "\' is not valid! skipping...")
+
     else:
         channel_group_string = ""
 
@@ -187,7 +210,7 @@ def AllChannelsSection(title, url):
                        sourcetitle=sourcetitle+" / "
                   sourcetitle=sourcetitle+section['Programs'][0]['Category']
                   sourcetitle=sourcetitle+' ('+datetime_from_utc_to_local(sectionstarttime).strftime('%I:%M%p')+' - '+datetime_from_utc_to_local(sectionendtime).strftime('%I:%M%p')+')'
-             elif "Channel Group" in title and re.sub('Channel Group ', '', title) in section['ChannelGroups']:
+             elif "Channel Group" in title and channel_group_id[re.sub('Channel Group ', '', title)] in section['ChannelGroups']:
                   sectiontitle=section['ChanNum']+" "+section['ChannelName']+" - "+section['Programs'][0]['Title']
                   sectionsummary=section['Programs'][0]['SubTitle']
                   if sectionsummary != "" and section['Programs'][0]['Description'] != "": 

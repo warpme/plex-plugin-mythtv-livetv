@@ -26,7 +26,7 @@
         {
                 "id": "mythtv_channel_groups",
                 "type": "text",
-                "label": "List of MythTV TV Channel Groups to additionally list. Field requires numeric Channel Group ID (like i.e. 1,3). Multiple groups must be comma separated",
+                "label": "List of MythTV TV Channel Groups to additionally list. Field requires list of TV channel group names defined in mythtv channel groups. Multiple groups names must be comma separated",
                 "default": ""
         },
         {
