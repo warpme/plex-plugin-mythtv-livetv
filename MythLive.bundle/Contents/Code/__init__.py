@@ -23,7 +23,7 @@ VIDEO_DURATION = 14400000   # Duration for Transcoder (ms); Default = 14400000 (
 ####################################################################################################
 def Start():
 
-    Log("MythTV LiveTV plugin v2.0 by unsober, Piotr Oniszczuk")
+    Log("MythTV LiveTV plugin v3.0.0 by unsober, Piotr Oniszczuk")
     Plugin.AddViewGroup("InfoList", viewMode="MediaPreview", mediaType="items",type='grid',summary=1)
     ObjectContainer.title1 = NAME
     ObjectContainer.view_group='InfoList'
@@ -164,7 +164,7 @@ def DisplayRecordingsSection(title, url):
 
         try:
              MACHINEID = Request.Headers['X-Plex-Client-Identifier'];
-             videourl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-proxy.php?file='+section['FileName']+'&client='+MACHINEID+'&verbose='+str(Prefs['mythtv_verbose'])+'&srcidskip='+str(Prefs['mythtv_srcid_skiplist'])
+             videourl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-proxy.php?file='+section['FileName']+'&client='+MACHINEID+'&verbose='+str(Prefs['mythtv_verbose'])
              thumburl='http://'+MYTHTV_HOSTNAME+':6544'+section['Channel']['IconURL']
              oc.add(CreateVideoClipObject(sectiontitle,videourl,sectiontitle,sourcetitle,sectionsummary,0,thumburl,False))
         except Exception, err:
@@ -245,7 +245,7 @@ def AllChannelsSection(title, url):
 
         try:
              MACHINEID = Request.Headers['X-Plex-Client-Identifier'];
-             channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-proxy.php?chanid='+section['ChanNum']+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])+'&srcidskip='+str(Prefs['mythtv_srcid_skiplist'])
+             channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-proxy.php?chanid='+section['ChanNum']+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])
              thumburl='http://'+MYTHTV_HOSTNAME+':6544'+section['IconURL']
              i=i+1
              if title == 'Channels Recently Watched' and 'RecentChannels' in Dict:
@@ -265,7 +265,7 @@ def AllChannelsSection(title, url):
               except:
                    Log("RaList Not Video Object, adding generic channel: "+ralist[i]+" in "+Dict['RecentChannels'])
                    MACHINEID = Request.Headers['X-Plex-Client-Identifier'];
-                   channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-proxy.php?chanid='+str(ralist[i])+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])+'&srcidskip='+str(Prefs['mythtv_srcid_skiplist'])
+                   channelurl='http://'+MYTHTV_HOSTNAME+'/plex-livetv-proxy.php?chanid='+str(ralist[i])+"&client="+MACHINEID+"&verbose="+str(Prefs['mythtv_verbose'])
                    oc.add(CreateVideoClipObject(str(ralist[i]),channelurl,str(ralist[i])+" - CURRENT PROGRAM UNKNOWN","","",0,"",False))
               i=i+1
 

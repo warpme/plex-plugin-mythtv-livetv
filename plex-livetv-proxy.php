@@ -36,11 +36,16 @@
 //-added to error reporting implemented in v1.3 support for errors on TV channels with different audio types.
 //Currently supported audio types are: mp2 and ac3
 //-rename php supporting script from plex-livetv-feeder.php to plex-livetv-proxy.php.
+//
+//v3.0.0
+//-added capability to server multiple tuner pools where every tuner pool is receiving only subsen of TV
+//channels. Script will now automagically select first free tuner for tuners pool for requested channel.
+//This makes SrcID exclussion obsolete and this parameter and functionality was removed.
 
 
 
 //(c) unsober, Piotr Oniszczuk(warpme@o2.pl)
-$ver="1.3.1";
+$ver="3.0.0";
 
 //Default verbosity if 'verbose' in GET isn't provided or different than 'True' or 'Debug'
 //0=minimal; 1=myth PROTO comands; 2=myth PROTO and data
@@ -53,8 +58,6 @@ $logfilename="/var/log/plex-livetv-proxy.log";
 $mythtv_host="localhost";
 $mythtv_port=6543;
 
-//SoureID list to skip (tuners with these SrcID's will be NOT served by script). Separator is "," i.e. "1,5"
-$sourceid_to_skip="";
 
 
 
@@ -103,7 +106,6 @@ if (@$_GET['verbose']!='' && $_GET['verbose']=='Debug') $verbose=2;
 if (@$_GET['contenttype']!='')  $content_type=$_GET['contenttype'];
 if (@$_GET['container']!='')    $container=$_GET['container'];
 if (@$_GET['buffersize']!='')   $bufsize_target=$_GET['buffersize'];
-if (@$_GET['srcidskip']!='')    $sourceid_to_skip=$_GET['srcidskip'];
 if (@$_GET['vcodec']!='')       $vcodec=$_GET['vcodec'];
 if (@$_GET['acodec']!='')       $acodec=$_GET['acodec'];
 
@@ -111,13 +113,10 @@ if ($monitor==0 && $verbose>=0) $logfile=fopen($logfilename,"w");
 
 $hostname_string=$hostname."-".$client;
 
-$sourceid_to_skip=preg_replace('/,|;/', '|', $sourceid_to_skip);
-
 debug("MythTV LiveTV proxy for PLEX v".$ver." by: unsober, Piotr Oniszczuk (c)",0);
 debug("  -URI from PLEX : ".$_SERVER["REQUEST_URI"],0);
 debug("  -Backend IP    : ".$mythtv_host,0);
 debug("  -Backend port  : ".$mythtv_port,0);
-debug("  -SrcID skiplist: ".$sourceid_to_skip,0);
 debug("  -Reg. channel  : ".$mythtv_channel,0);
 debug("  -Client ID     : ".$client,0);
 debug("  -PLEX v.codec  : ".$vcodec,0);
@@ -134,9 +133,10 @@ init_cmd_connection();
 send_cmd_message("MYTH_PROTO_VERSION 91 BuzzOff",1);
 send_cmd_message("ANN Playback $hostname_string 0",1);
 
+
 $input_info=send_cmd_message("GET_FREE_INPUT_INFO 0",1);
 
-$tuner=identify_free_tuner($input_info,$sourceid_to_skip);
+$tuner=identify_free_tuner($input_info,$mythtv_channel);
 if (! $tuner) {
     return_no_tuners_error($mythtv_channel);
     debug("\n
@@ -265,7 +265,7 @@ function identify_file_and_storage_group(){
     }
 }
 
-function identify_free_tuner($input_info,$sourceid_to_skip){
+function identify_free_tuner($input_info,$mythtv_channel){
     //Identifies free INPUT by parsing $input_info
     //Returns first free tuner i.e. '1'
     $free_tuner=0;
@@ -287,11 +287,15 @@ function identify_free_tuner($input_info,$sourceid_to_skip){
 
         if ($chanid) debug("Skipping tuner:".$tuner." (multirecords on ".$chanid.")",0);
         else {
-             if (preg_match("/".$sourceid."/", $sourceid_to_skip)) debug("Skipping tuner:".$tuner." (srcID=$sourceid is excluded)",0);
-             else {
-                 $free_tuner=$tuner;
-                 break;
-             }
+            $channel_info=send_cmd_message("QUERY_RECORDER ".$tuner."[]:[]CHECK_CHANNEL[]:[]".$mythtv_channel,1);
+            if ($channel_info==1) {
+                debug("(identify_free_tuner):CHECK_CHANNEL for".$mythtv_channel." returns:".$channel_info,2);
+                $free_tuner=$tuner;
+                break;
+            }
+            else {
+                debug("Skipping tuner:".$tuner." (channel NOT avaliable)",0);
+            }
         }
     }
     if ($free_tuner) debug("Found free tuner:".$free_tuner,0);

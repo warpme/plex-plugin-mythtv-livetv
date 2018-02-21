@@ -36,12 +36,6 @@
                 "default": "1"
         },
         {
-                "id": "mythtv_srcid_skiplist",
-                "type": "text",
-                "label": "Which MythTV SourceID (and associated tuners) should be excluded when PLEX is looking for free TV tuner at LiveTV request. This setting is useful when You have some tuners for which requested TV channels are NOT avaliable. Such tuners should be excluded for PLEX. If not excluded - PLEX will show You TV channel avaliable on such tuner and usually not requested by You. Leave empty when all tuners You have have ALL TV channels You may request to watch.",
-                "default": ""
-        },
-        {
                 "id": "mythtv_video_codec",
                 "type": "text",
                 "label": "Which video codec is used by the MythTV Tuner?. Default is 'auto'. If there is issue with playback, set this appropriatelly to video codec used by TV channel broadcaster. Most frequent values are: 'mpeg2video', 'h264' and 'hevc'. For DVB SD in Europe and US ATSC use 'mpeg2video'. For DVB HD in Europe use 'h264'. For UHD use 'hevc'.",
