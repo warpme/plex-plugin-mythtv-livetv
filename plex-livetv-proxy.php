@@ -45,7 +45,7 @@
 
 
 //(c) unsober, Piotr Oniszczuk(warpme@o2.pl)
-$ver="3.0.0";
+$ver="3.0.1";
 
 //Default verbosity if 'verbose' in GET isn't provided or different than 'True' or 'Debug'
 //0=minimal; 1=myth PROTO comands; 2=myth PROTO and data
@@ -197,17 +197,23 @@ function send_file($filename){
 }
 
 function return_no_tuners_error($mythtv_channel){
-    global $no_tuners_avaliable_msg,$acodec,$vcodec;
+    global $acodec,$vcodec,$content_type,$container;
     //header('HTTP/1.1 503 Service Temporarily Unavailable'); PLEX not interpreting 503 in helpful way...
     header('Status: 503 No free tuners avalaible');
+    header("Content-type: ".$content_type);
+    header("Content-disposition: filename=mythtv-livetv-channel".$mythtv_channel.".".$container);
+    header("Cache-Control:no-cache");
     if ($acodec=="mp2") send_file("plex-livetv-proxy.msg/plex_no_free_tuners_msg_1");
     if ($acodec=="ac3") send_file("plex-livetv-proxy.msg/plex_no_free_tuners_msg_2");
 }
 
-function return_livetv_error($error_code){
-    global $error_code,$acodec,$vcodec;
+function return_livetv_error($error_code,$mythtv_channel){
+    global $error_code,$acodec,$vcodec,$content_type,$container;
     //header('HTTP/1.1 503 Service Temporarily Unavailable'); PLEX not interpreting 503 in helpful way...
     header('Status: 503 mythtv returns '.$error_code);
+    header("Content-type: ".$content_type);
+    header("Content-disposition: filename=mythtv-livetv-channel".$mythtv_channel.".".$container);
+    header("Cache-Control:no-cache");
     if ($acodec=="mp2") send_file("plex-livetv-proxy.msg/plex_error_livetv_msg_1");
     if ($acodec=="ac3") send_file("plex-livetv-proxy.msg/plex_error_livetv_msg_2");
 }
@@ -229,7 +235,7 @@ function get_filetransfer_info(){
     $mythtv_socket=$filetransfer_info_arr[1];
     if ($mythtv_socket!=0) debug("Will use MythTV socket ($mythtv_socket)",0);
     else {
-        return_livetv_error("mythtv_socket=0");
+        return_livetv_error("mythtv_socket=0",$mythtv_channel);
         debug("\n
 ---- Myth returns socket address=0.
 ---- This probably means LiveTV channel is not tunable or there was other issue with LiveTV at backend.
@@ -255,7 +261,7 @@ function identify_file_and_storage_group(){
     $storage_group=$recording_info_arr[41];
     if ($file) debug("Storage Group ($storage_group) and File ($file) Found",0);
     else {
-        return_livetv_error("file_size=0");
+        return_livetv_error("file_size=0",$mythtv_channel);
         debug("\n
 ---- Myth returns empty recording filename.
 ---- This probably means starting LiveTV failed at backend due unavaliable channel or other issue.

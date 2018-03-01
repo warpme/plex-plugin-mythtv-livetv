@@ -23,7 +23,7 @@ VIDEO_DURATION = 14400000   # Duration for Transcoder (ms); Default = 14400000 (
 ####################################################################################################
 def Start():
 
-    Log("MythTV LiveTV plugin v3.0.0 by unsober, Piotr Oniszczuk")
+    Log("MythTV LiveTV plugin v3.0.1 by unsober, Piotr Oniszczuk")
     Plugin.AddViewGroup("InfoList", viewMode="MediaPreview", mediaType="items",type='grid',summary=1)
     ObjectContainer.title1 = NAME
     ObjectContainer.view_group='InfoList'
