@@ -41,11 +41,14 @@
 //-added capability to server multiple tuner pools where every tuner pool is receiving only subsen of TV
 //channels. Script will now automagically select first free tuner for tuners pool for requested channel.
 //This makes SrcID exclussion obsolete and this parameter and functionality was removed.
+//
+//v3.1.0
+//-added support for HD homerun tuners
 
 
 
 //(c) unsober, Piotr Oniszczuk(warpme@o2.pl)
-$ver="3.0.1";
+$ver="3.1.0";
 
 //Default verbosity if 'verbose' in GET isn't provided or different than 'True' or 'Debug'
 //0=minimal; 1=myth PROTO comands; 2=myth PROTO and data
@@ -275,7 +278,7 @@ function identify_free_tuner($input_info,$mythtv_channel){
     //Identifies free INPUT by parsing $input_info
     //Returns first free tuner i.e. '1'
     $free_tuner=0;
-    $input_info_arr=preg_split("/DVBInput|MPEG2TS/",$input_info);
+    $input_info_arr=preg_split("/DVBInput|MPEG2TS|None/",$input_info);
     for ($i=1;$i<sizeof($input_info_arr);$i++){
         debug("(identify_free_tuner): parsing line ".$i." ->".$input_info_arr[$i],2);
 
