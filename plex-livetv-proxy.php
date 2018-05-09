@@ -44,11 +44,15 @@
 //
 //v3.1.0
 //-added support for HD homerun tuners
+//
+//v3.2.0
+//-added timeout for waiting for stream from myth. If timeout (currently $stream_timeout = 60sec) is exceeded - script
+//will exit. This allowing to release recorder in myth backend
 
 
 
 //(c) unsober, Piotr Oniszczuk(warpme@o2.pl)
-$ver="3.1.0";
+$ver="3.2.0";
 
 //Default verbosity if 'verbose' in GET isn't provided or different than 'True' or 'Debug'
 //0=minimal; 1=myth PROTO comands; 2=myth PROTO and data
@@ -60,6 +64,9 @@ $logfilename="/var/log/plex-livetv-proxy.log";
 //MythTV backend IP and port
 $mythtv_host="localhost";
 $mythtv_port=6543;
+
+// Timeout waiting for stream from MythTV backend
+$stream_timeout=30;
 
 
 
@@ -87,7 +94,6 @@ $socket=null;
 $data=null;
 $monitor=0;
 $mythtv_socket="";
-
 
 //Default values if not provided by http GET
 $readdata       = "True";
@@ -127,6 +133,7 @@ debug("  -PLEX a.codec  : ".$acodec,0);
 debug("  -Content. type : ".$content_type,0);
 debug("  -Container type: ".$container,0);
 debug("  -Data chunks   : ".$bufsize_target,0);
+debug("  -Stream timeout: ".$stream_timeout,0);
 debug("  -Verbosity     : ".$verbose,0);
 
 
@@ -150,6 +157,8 @@ if (! $tuner) {
 
 send_cmd_message('QUERY_RECORDER '.$tuner.'[]:[]SPAWN_LIVETV[]:[]'.$hostname_string.'[]:[]0[]:[]'.$mythtv_channel,1);
 
+$tmo_data_wait=0;
+
 while(1){
     while ( $filesize == 0 ) {
         close_data_connection();
@@ -157,8 +166,25 @@ while(1){
         identify_file_and_storage_group();
         $file_info=send_cmd_message('QUERY_SG_FILEQUERY[]:[]'.$hostname.'[]:[]'.$storage_group.'[]:[]'.$fullfile,1);
         get_file_info();
-        if ($filesize==0) sleep(1);
-        else init_data_connection();
+        if ($filesize==0) {
+            sleep(1);
+            $tmo_data_wait+=1;
+            if ($tmo_data_wait>=$stream_timeout) {
+                close_data_connection();
+                close_cmd_connection();
+                return_livetv_error("timeout waiting for stream from myth",$mythtv_channel);
+                debug("\n
+---- Proxy waits too long (".$stream_timeout."sec) for stream from MythTV.
+---- This probably means LiveTV session started, but MythTV not provides data stream to proxy.
+---- For mode details pls examine MythTV backend log.
+---- Script will now EXIT!...\n",0);
+                exit;
+            }
+        }
+        else {
+            $tmo_data_wait=0;
+            init_data_connection();
+        }
         if (connection_aborted()) {
             debug("Connection to PLEX aborted...",0);
             close_data_connection();
@@ -202,7 +228,7 @@ function send_file($filename){
 function return_no_tuners_error($mythtv_channel){
     global $acodec,$vcodec,$content_type,$container;
     //header('HTTP/1.1 503 Service Temporarily Unavailable'); PLEX not interpreting 503 in helpful way...
-    header('Status: 503 No free tuners avalaible');
+    header("Status: 503 No free tuners avalaible");
     header("Content-type: ".$content_type);
     header("Content-disposition: filename=mythtv-livetv-channel".$mythtv_channel.".".$container);
     header("Cache-Control:no-cache");
@@ -211,9 +237,9 @@ function return_no_tuners_error($mythtv_channel){
 }
 
 function return_livetv_error($error_code,$mythtv_channel){
-    global $error_code,$acodec,$vcodec,$content_type,$container;
+    global $acodec,$vcodec,$content_type,$container;
     //header('HTTP/1.1 503 Service Temporarily Unavailable'); PLEX not interpreting 503 in helpful way...
-    header('Status: 503 mythtv returns '.$error_code);
+    header("Status: 503 ".$error_code);
     header("Content-type: ".$content_type);
     header("Content-disposition: filename=mythtv-livetv-channel".$mythtv_channel.".".$container);
     header("Cache-Control:no-cache");
@@ -238,7 +264,7 @@ function get_filetransfer_info(){
     $mythtv_socket=$filetransfer_info_arr[1];
     if ($mythtv_socket!=0) debug("Will use MythTV socket ($mythtv_socket)",0);
     else {
-        return_livetv_error("mythtv_socket=0",$mythtv_channel);
+        return_livetv_error("MythTV proposed socket=0",$mythtv_channel);
         debug("\n
 ---- Myth returns socket address=0.
 ---- This probably means LiveTV channel is not tunable or there was other issue with LiveTV at backend.
@@ -264,7 +290,7 @@ function identify_file_and_storage_group(){
     $storage_group=$recording_info_arr[41];
     if ($file) debug("Storage Group ($storage_group) and File ($file) Found",0);
     else {
-        return_livetv_error("file_size=0",$mythtv_channel);
+        return_livetv_error("MythTV provides file_size=0",$mythtv_channel);
         debug("\n
 ---- Myth returns empty recording filename.
 ---- This probably means starting LiveTV failed at backend due unavaliable channel or other issue.
