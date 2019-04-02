@@ -48,11 +48,14 @@
 //v3.2.0
 //-added timeout for waiting for stream from myth. If timeout (currently $stream_timeout = 60sec) is exceeded - script
 //will exit. This allowing to release recorder in myth backend
+//
+//v3.3.0 (20190402)
+//-added support for multiple delivery systems added in current master
 
 
 
 //(c) unsober, Piotr Oniszczuk(warpme@o2.pl)
-$ver="3.2.0";
+$ver="3.3.0";
 
 //Default verbosity if 'verbose' in GET isn't provided or different than 'True' or 'Debug'
 //0=minimal; 1=myth PROTO comands; 2=myth PROTO and data
@@ -304,7 +307,7 @@ function identify_free_tuner($input_info,$mythtv_channel){
     //Identifies free INPUT by parsing $input_info
     //Returns first free tuner i.e. '1'
     $free_tuner=0;
-    $input_info_arr=preg_split("/DVBInput|MPEG2TS|None/",$input_info);
+    $input_info_arr=preg_split("/DVBInput|MPEG2TS|None|DVB-C\/A|DVB-C\/B|DVB-C\/C|DVB-T|DVB-T2|DSS|DVB-S|DVB-S2|DVBH|ISDBT|ISDBS|ISDBC|ATSC|ATSCMH|DMBTH|CMMB/",$input_info);
     for ($i=1;$i<sizeof($input_info_arr);$i++){
         debug("(identify_free_tuner): parsing line ".$i." ->".$input_info_arr[$i],2);
 
